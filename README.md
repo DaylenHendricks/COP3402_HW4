@@ -6,7 +6,7 @@ ___By Daylen Hendricks & Brandon Ramlagan___
 **To compile the compiler:**
 $ gcc parsercodegen.c
 
-**To run the compiler in Linux:**
+**To run the compiler in Linux/Eustis:**
 $ ./a.out in1.txt
 
 **To run the compiler in Windows:**
