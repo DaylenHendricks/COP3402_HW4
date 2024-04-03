@@ -1,6 +1,7 @@
 # COP3402_HW4 UCF Spring 2024
-# Daylen Hendricks, Brandon Ramlagan
-PL/0 Compiler (Incomplete)
+PL/0 Compiler (Incomplete)  
+___By Daylen Hendricks & Brandon Ramlagan___
+
 
 **To compile the compiler:**
 $ gcc parsercodegen.c
