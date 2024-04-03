@@ -1,4 +1,4 @@
-//Homework 3: PL0 Compiler
+//Homework 4: PL/0 Compiler
 //Authors: Daylen Hendricks, Brandon Ramlagan
 //COP 3402 Spring 2024
 //Date 4/07/2024
