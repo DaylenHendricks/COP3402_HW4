@@ -6,10 +6,10 @@ ___By Daylen Hendricks & Brandon Ramlagan___
 **To compile the compiler:**
 $ gcc parsercodegen.c
 
-**To run the compiler:**
+**To run the compiler in Linux:**
 $ ./a.out in1.txt
 
--**To run the compiler on Windows:**-
+**To run the compiler in Windows:**
 $ a.exe in1.txt  
 ^(Where in1 is the name of the input file)  
 _______________________________________________
