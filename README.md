@@ -9,7 +9,7 @@ $ gcc parsercodegen.c
 **To run the compiler:**
 $ ./a.out in1.txt
 
-**To run the compiler on Windows:**
+* **To run the compiler on Windows:**
 $ a.exe in1.txt
 ^(Where in1 is the name of the input file)
 _______________________________________________
