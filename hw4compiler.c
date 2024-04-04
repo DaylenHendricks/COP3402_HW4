@@ -50,6 +50,7 @@ void insertSymbolTable(int kind, char name[11], int val, int level, int addr); /
 int symbolTableCheck(char name[11]);
 void ConstDeclaration(char identArr[50][12]);
 int VarDeclaration(char identArray[50][12]); //returns number of variables
+void ProcedureDeclaration(char identArray[50][12]);
 int STATEMENT(char identArray[50][12]);
 void CONDITION(char identArray[50][12]);
 void EXPRESSION(char identArray[50][12]);
@@ -500,7 +501,6 @@ int main(int argc, char *fileName[])
 //end of lexical analyser/scanner_________________________________
 
 //begin of syntactic analyser / parser____________________________
-    //printf("\n\nend scan\n begin parser:\n");
 
 // PROGRAM
     int token = tokenArr[0];
@@ -551,6 +551,7 @@ void block(char identArr[50][12])
     token = tokenArr[tokenIndex];
     ConstDeclaration(identArr);
     int numVars = VarDeclaration(identArr);
+    ProcedureDeclaration(identArr);
     //emit INC (M = 3 + numVars)
         assemblyTable[assemIndex][0] = 'I';
         assemblyTable[assemIndex][1] = 'N';
@@ -729,6 +730,54 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
     return(numVars);
 };
 
+void ProcedureDeclaration(char identArray[50][12])
+{
+    printf("\ncalled PROCEDUREDECLARATION");
+    printf("|token: %d", token);
+
+    do
+    {
+        tokenIndex++;
+        token = tokenArr[tokenIndex];
+
+        if (token != identsym)
+        {
+            //error
+            exit(0);
+        }
+
+        tokenIndex++;
+        token = tokenArr[tokenIndex];
+        if (token != semicolonsym)
+        {
+            //error
+            exit(0);
+        }
+
+        tokenIndex++;
+        token = tokenArr[tokenIndex];
+        block(identArray);
+        if (token != semicolonsym)
+        {
+            //error
+            exit(0);
+        }
+    }   while (token == procsym);
+    /*
+    EBNF: procedure-declaration ::= { "procedure" ident ";" block ";" }
+    while TOKEN = "procsym" do begin
+GET(TOKEN);
+if TOKEN != “identsym” then ERROR;
+GET(TOKEN);
+if TOKEN != "semicolomsym" then ERROR;
+GET(TOKEN);
+BLOCK;
+if TOKEN != "semicolomsym" then ERROR;
+GET(TOKEN)
+end;
+*/
+};
+
 int STATEMENT(char identArray[50][12])
 {
     printf("\ncalled STATEMENT");
@@ -780,6 +829,47 @@ int STATEMENT(char identArray[50][12])
         assemblyTable[assemIndex][2] = 'O';    
         assemIndex++;  
         return(0);
+    }
+    else if(token == callsym)
+    {
+        tokenIndex++;
+        token = tokenArr[tokenIndex];
+        if(token != identsym)
+        {
+            printf("Error: identifier must follow call");
+            exit(0);
+        }
+        else
+        {
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            char tempName [11] = {'#'};
+            for(int i = 0; identArray[varCount][i] != '#'; i++)
+            {
+                printf("|%dletter(s), stored:", (i + 1));
+                tempName[i] = identArray[varCount][i];
+                printf("%c", tempName[i]);
+            }
+            printf("|name stored:%s", tempName);
+            varCount++;
+            symIdx = symbolTableCheck(tempName);
+            if (symIdx == -1)
+            {
+                printf("Error: undeclared identifier");
+                exit(0);
+            }
+            if(symbolTable[symIdx].kind == 3)
+            {
+                //gen(CAL, level – symbollevel(i), symboladdr(i));
+            }
+            else
+            {
+                printf("Error: call must be followed by a procedure identifier");
+                exit(0);
+            }
+        }
+        tokenIndex++;
+        token = tokenArr[tokenIndex];
     }
     else if (token == beginsym)
     {printf("|beginsym");
