@@ -507,7 +507,7 @@ int main(int argc, char *fileName[])
 // PROGRAM
     int token = tokenArr[0];
     tokenIndex = 0; //function's tokenArray index
-    FILE* outFile = fopen("elf.txt", 'w');
+    FILE* outFile = fopen("elf.txt", "w");
 
     block(identArr, outFile);
     token = tokenArr[tokenIndex];
@@ -517,6 +517,7 @@ int main(int argc, char *fileName[])
         printf("Error: program must end with period");
         exit(remove("elf.txt"));
     }
+    fprintf(outFile, "9 0 3");//end of program
     for(int i = 1; i < tp; i++)
     {
         printf("\nkind: %d", symbolTable[i].kind);
@@ -559,7 +560,7 @@ void block(char identArr[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'N';
         assemblyTable[assemIndex][2] = 'C';
         assemIndex++;  
-    fprintf(file, "INC %d %d", lexlvl, 3 + numVars);
+    fprintf(file, "6 %d %d\n", lexlvl, 3 + numVars);
     STATEMENT(identArr, file);
     printf("token in block: %d", token);
     printf("||Exit BLOCK");
@@ -832,6 +833,7 @@ int STATEMENT(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'T';
         assemblyTable[assemIndex][2] = 'O';    
         assemIndex++;  
+        fprintf(file, "4 %d %d\n", lexlvl, symbolTable[symIdx].addr);
         return(0);
     }
     else if(token == callsym)
@@ -914,6 +916,7 @@ int STATEMENT(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'P';
         assemblyTable[assemIndex][2] = 'C';    
         assemIndex++;  
+        fprintf(file, "8 0 #\n");
         if (token != thensym)
         {printf("|thensym");
             printf("Error: if must be followed by then");
@@ -955,13 +958,14 @@ int STATEMENT(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'P';
         assemblyTable[assemIndex][2] = 'C';    
         assemIndex++;  
+        fprintf(file, "8 0 #\n");
         STATEMENT(identArray, file);
         // emit JMP (M = loopIdx)
         assemblyTable[assemIndex][0] = 'J';
         assemblyTable[assemIndex][1] = 'M';
         assemblyTable[assemIndex][2] = 'P';    
         assemIndex++;  
-        fprintf(file, "7 0 #");
+        fprintf(file, "7 0 #\n");
         // code[jpcIdx].M = current code index
         return(0);
     }
@@ -999,7 +1003,9 @@ int STATEMENT(char identArray[50][12], FILE* file)
         tokenIndex++;
         token = tokenArr[tokenIndex];
         // emit READ
+        fprintf(file, "9 0 2\n");
         // emit STO (M = table[symIdx].addr)
+        fprintf(file, "4 %d %d\n", lexlvl, symbolTable[symIdx].addr);
         return(0);
     }
     else if (token == writesym)
@@ -1008,6 +1014,7 @@ int STATEMENT(char identArray[50][12], FILE* file)
         token = tokenArr[tokenIndex];
         EXPRESSION(identArray, file);
         // emit WRITE
+        fprintf(file, "9 0 1\n");
         return(0);
     }
     printf("||exit STATEMENT");
@@ -1027,6 +1034,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'D';
         assemblyTable[assemIndex][2] = 'D';    
         assemIndex++;  
+        fprintf(file, "2 0 11\n");
     }
     else
     {
@@ -1041,6 +1049,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'Q';
         assemblyTable[assemIndex][2] = 'L';    
         assemIndex++;  
+        fprintf(file, "2 0 5\n");
         }
         else if (token == neqsym)
         {printf("|neqsym");
@@ -1051,7 +1060,8 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][0] = 'N';
         assemblyTable[assemIndex][1] = 'E';
         assemblyTable[assemIndex][2] = 'Q';    
-        assemIndex++;  
+        assemIndex++;
+        fprintf(file, "2 0 6\n");
         }
         else if (token == lessym)
         {printf("|lessym");
@@ -1063,6 +1073,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'S';
         assemblyTable[assemIndex][2] = 'S';    
         assemIndex++;  
+        fprintf(file, "2 0 7\n");
         }
         else if (token == leqsym)
         {printf("|leqsym");
@@ -1074,6 +1085,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'E';
         assemblyTable[assemIndex][2] = 'Q';    
         assemIndex++;  
+        fprintf(file, "2 0 8\n");
         }
         else if (token == gtrsym)
         {printf("|gtrsym");
@@ -1085,6 +1097,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'T';
         assemblyTable[assemIndex][2] = 'R';    
         assemIndex++;  
+        fprintf(file, "2 0 9\n");
         }
         else if (token == geqsym)
         {printf("|geqsym");
@@ -1096,6 +1109,7 @@ void CONDITION(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'E';
         assemblyTable[assemIndex][2] = 'Q';    
         assemIndex++;  
+        fprintf(file, "2 0 10\n");
         }
         else
         {
@@ -1129,7 +1143,7 @@ void EXPRESSION(char identArray[50][12], FILE* file)//(HINT: modify it to match 
         assemblyTable[assemIndex][1] = 'D';
         assemblyTable[assemIndex][2] = 'D';    
         assemIndex++;   
-        fprintf(file, "2 0 1");
+        fprintf(file, "2 0 1\n");
             }
             else
             {
@@ -1142,7 +1156,7 @@ void EXPRESSION(char identArray[50][12], FILE* file)//(HINT: modify it to match 
         assemblyTable[assemIndex][1] = 'U';
         assemblyTable[assemIndex][2] = 'B';    
         assemIndex++; 
-        fprintf(file, "2 0 2");  
+        fprintf(file, "2 0 2\n");  
             }
         }
     }
@@ -1168,7 +1182,7 @@ void EXPRESSION(char identArray[50][12], FILE* file)//(HINT: modify it to match 
                 assemblyTable[assemIndex][1] = 'D';
                 assemblyTable[assemIndex][2] = 'D';    
                 assemIndex++;  
-                fprintf(file, "2 0 1"); 
+                fprintf(file, "2 0 1\n"); 
             }
             else
             {
@@ -1181,7 +1195,7 @@ void EXPRESSION(char identArray[50][12], FILE* file)//(HINT: modify it to match 
                 assemblyTable[assemIndex][1] = 'U';
                 assemblyTable[assemIndex][2] = 'B';    
                 assemIndex++;  
-                fprintf(file, "2 0 2");
+                fprintf(file, "2 0 2\n");
             }
         }
     }
@@ -1208,7 +1222,7 @@ void TERM(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'U';
         assemblyTable[assemIndex][2] = 'L';    
         assemIndex++;   
-        fprintf(file, "2 0 3");
+        fprintf(file, "2 0 3\n");
         }
         else if (token == slashsym)
         {printf("|slashsym");
@@ -1220,7 +1234,7 @@ void TERM(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'I';
         assemblyTable[assemIndex][2] = 'V';    
         assemIndex++; 
-        fprintf(file, "2 0 4");  
+        fprintf(file, "2 0 4\n");  
         }
         else
         {
@@ -1269,7 +1283,7 @@ void FACTOR(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'I';
         assemblyTable[assemIndex][2] = 'T';    
         assemIndex++;
-        fprintf(file, "1 0 %d", symbolTable[symIdx].val);
+        fprintf(file, "1 0 %d\n", symbolTable[symIdx].val);
         }
         else //(var)
         {
@@ -1278,7 +1292,7 @@ void FACTOR(char identArray[50][12], FILE* file)
         assemblyTable[assemIndex][1] = 'O';
         assemblyTable[assemIndex][2] = 'D';    
         assemIndex++;
-        fprintf(file, "1 0 %d", symbolTable[symIdx].val);   
+        fprintf(file, "3 0 %d\n", symbolTable[symIdx].val);   
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
