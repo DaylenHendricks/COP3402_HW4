@@ -43,19 +43,20 @@ int token = 0;//token for parser
 int finalToken;//token for period check
 char assemblyTable[50][3];//table for assembly code
 int assemIndex = 0;
+int lexlvl = 0;
 
 void printAssembly();
-void block(char identArray[50][12]);
+void block(char identArray[50][12], FILE* file);
 void insertSymbolTable(int kind, char name[11], int val, int level, int addr); //insert into symbol table
 int symbolTableCheck(char name[11]);
-void ConstDeclaration(char identArr[50][12]);
-int VarDeclaration(char identArray[50][12]); //returns number of variables
-void ProcedureDeclaration(char identArray[50][12]);
-int STATEMENT(char identArray[50][12]);
-void CONDITION(char identArray[50][12]);
-void EXPRESSION(char identArray[50][12]);
-void TERM(char identArray[50][12]);
-void FACTOR(char identArray[50][12]);
+void ConstDeclaration(char identArr[50][12], FILE* file);
+int VarDeclaration(char identArray[50][12], FILE* file); //returns number of variables
+void ProcedureDeclaration(char identArray[50][12], FILE* file);
+int STATEMENT(char identArray[50][12], FILE* file);
+void CONDITION(char identArray[50][12], FILE* file);
+void EXPRESSION(char identArray[50][12], FILE* file);
+void TERM(char identArray[50][12], FILE* file);
+void FACTOR(char identArray[50][12], FILE* file);
 
 
 int main(int argc, char *fileName[])
@@ -508,7 +509,7 @@ int main(int argc, char *fileName[])
     tokenIndex = 0; //function's tokenArray index
     FILE* outFile = fopen("elf.txt", 'w');
 
-    block(identArr);
+    block(identArr, outFile);
     token = tokenArr[tokenIndex];
     printf("\nFinal Token:%d\n\n", token);
     if (token != periodsym)
@@ -547,18 +548,19 @@ void printAssembly()
     }
 };
 
-void block(char identArr[50][12])
+void block(char identArr[50][12], FILE* file)
 {
     printf("\ncalled block");
     token = tokenArr[tokenIndex];
-    ConstDeclaration(identArr);
-    int numVars = VarDeclaration(identArr);
+    ConstDeclaration(identArr, file);
+    int numVars = VarDeclaration(identArr, file);
     //emit INC (M = 3 + numVars)
         assemblyTable[assemIndex][0] = 'I';
         assemblyTable[assemIndex][1] = 'N';
-        assemblyTable[assemIndex][2] = 'C';    
+        assemblyTable[assemIndex][2] = 'C';
         assemIndex++;  
-    STATEMENT(identArr);
+    fprintf(file, "INC %d %d", lexlvl, 3 + numVars);
+    STATEMENT(identArr, file);
     printf("token in block: %d", token);
     printf("||Exit BLOCK");
 };
@@ -612,7 +614,7 @@ int symbolTableCheck(char name[11])
     return -1;
 }
 
-void ConstDeclaration(char identArr[50][12])
+void ConstDeclaration(char identArr[50][12], FILE* file)
 {
     printf("\ncalled ConstDeclaration");
     printf("|Token:%d", token);
@@ -680,7 +682,7 @@ void ConstDeclaration(char identArr[50][12])
     printf("exit CONSTDECLARATION");
 };
 
-int VarDeclaration(char identArray[50][12]) //returns number of variables
+int VarDeclaration(char identArray[50][12], FILE* file) //returns number of variables
 {
     printf("\ncalled VarDeclaration");
     printf("|Token:%d", token);
@@ -731,7 +733,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
     return(numVars);
 };
 
-void ProcedureDeclaration(char identArray[50][12])
+void ProcedureDeclaration(char identArray[50][12], FILE* file)
 {
     printf("called PROCEDUREDECLARATION");
     printf("|token: %d", token);
@@ -744,6 +746,7 @@ void ProcedureDeclaration(char identArray[50][12])
         if (token != identsym)
         {
             //error
+            exit(remove("elf.txt"));
         }
 
         tokenIndex++;
@@ -751,14 +754,16 @@ void ProcedureDeclaration(char identArray[50][12])
         if (token != semicolonsym)
         {
             //error
+            exit(remove("elf.txt"));
         }
 
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        block(identArray);
+        block(identArray, file);
         if (token != semicolonsym)
         {
             //error
+            exit(remove("elf.txt"));
         }
     }   while (token == procsym);
     /*
@@ -777,7 +782,7 @@ end;
 };
 
 
-int STATEMENT(char identArray[50][12])
+int STATEMENT(char identArray[50][12], FILE* file)
 {
     printf("\ncalled STATEMENT");
     printf("|Token:%d", token);
@@ -821,7 +826,7 @@ int STATEMENT(char identArray[50][12])
         tokenIndex++;
         token = tokenArr[tokenIndex];
         finalToken = tokenArr[tokenIndex];
-        EXPRESSION(identArray);
+        EXPRESSION(identArray, file);
         // emit STO (M = table[symIdx].addr)
         assemblyTable[assemIndex][0] = 'S';
         assemblyTable[assemIndex][1] = 'T';
@@ -874,12 +879,12 @@ int STATEMENT(char identArray[50][12])
     {printf("|beginsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        STATEMENT(identArray);
+        STATEMENT(identArray, file);
         do
         {
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            STATEMENT(identArray);
+            STATEMENT(identArray, file);
             printf("|whiletoken:%d", token);
         }while (token == semicolonsym);
     
@@ -902,7 +907,7 @@ int STATEMENT(char identArray[50][12])
     {printf("|ifsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        CONDITION(identArray);
+        CONDITION(identArray, file);
         // jpcIdx = current code index
         // emit JPC
         assemblyTable[assemIndex][0] = 'J';
@@ -917,7 +922,7 @@ int STATEMENT(char identArray[50][12])
         printf("|thensym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        STATEMENT(identArray);
+        STATEMENT(identArray, file);
         printf("|then statement done");
         printf("|token %d", token);
         // code[jpcIdx].M = current code index
@@ -936,7 +941,7 @@ int STATEMENT(char identArray[50][12])
         tokenIndex++;
         token = tokenArr[tokenIndex];
         // loopIdx = current code index
-        CONDITION(identArray);
+        CONDITION(identArray, file);
         if (token != dosym)
         {
             printf("Error: while must be followed by do");
@@ -950,12 +955,13 @@ int STATEMENT(char identArray[50][12])
         assemblyTable[assemIndex][1] = 'P';
         assemblyTable[assemIndex][2] = 'C';    
         assemIndex++;  
-        STATEMENT(identArray);
+        STATEMENT(identArray, file);
         // emit JMP (M = loopIdx)
         assemblyTable[assemIndex][0] = 'J';
         assemblyTable[assemIndex][1] = 'M';
         assemblyTable[assemIndex][2] = 'P';    
         assemIndex++;  
+        fprintf(file, "7 0 #");
         // code[jpcIdx].M = current code index
         return(0);
     }
@@ -1000,14 +1006,14 @@ int STATEMENT(char identArray[50][12])
     {printf("|writesym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        EXPRESSION(identArray);
+        EXPRESSION(identArray, file);
         // emit WRITE
         return(0);
     }
     printf("||exit STATEMENT");
 };
 
-void CONDITION(char identArray[50][12])
+void CONDITION(char identArray[50][12], FILE* file)
 {
     printf("\ncalled CONDITION");
     printf("|Token:%d", token);
@@ -1015,7 +1021,7 @@ void CONDITION(char identArray[50][12])
     {printf("|oddsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        EXPRESSION(identArray);
+        EXPRESSION(identArray, file);
         // emit ODD
         assemblyTable[assemIndex][0] = 'O';
         assemblyTable[assemIndex][1] = 'D';
@@ -1024,12 +1030,12 @@ void CONDITION(char identArray[50][12])
     }
     else
     {
-        EXPRESSION(identArray);
+        EXPRESSION(identArray, file);
         if (token == eqsym)
         {printf("|eqsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit EQL
         assemblyTable[assemIndex][0] = 'E';
         assemblyTable[assemIndex][1] = 'Q';
@@ -1040,7 +1046,7 @@ void CONDITION(char identArray[50][12])
         {printf("|neqsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit NEQ
         assemblyTable[assemIndex][0] = 'N';
         assemblyTable[assemIndex][1] = 'E';
@@ -1051,7 +1057,7 @@ void CONDITION(char identArray[50][12])
         {printf("|lessym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit LSS
         assemblyTable[assemIndex][0] = 'L';
         assemblyTable[assemIndex][1] = 'S';
@@ -1062,7 +1068,7 @@ void CONDITION(char identArray[50][12])
         {printf("|leqsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit LEQ
         assemblyTable[assemIndex][0] = 'L';
         assemblyTable[assemIndex][1] = 'E';
@@ -1073,7 +1079,7 @@ void CONDITION(char identArray[50][12])
         {printf("|gtrsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit GTR
         assemblyTable[assemIndex][0] = 'G';
         assemblyTable[assemIndex][1] = 'T';
@@ -1084,7 +1090,7 @@ void CONDITION(char identArray[50][12])
         {printf("|geqsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-            EXPRESSION(identArray);
+            EXPRESSION(identArray, file);
             // emit GEQ
         assemblyTable[assemIndex][0] = 'G';
         assemblyTable[assemIndex][1] = 'E';
@@ -1100,41 +1106,43 @@ void CONDITION(char identArray[50][12])
     printf("||Exit CONDITION");
 };
 
-void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
+void EXPRESSION(char identArray[50][12], FILE* file)//(HINT: modify it to match the grammar)
 {
     printf("\ncalled EXPRESSION");
     printf("|Token:%d", token);
-    TERM(identArray);
+    TERM(identArray, file);
 
     if (token == minussym)
     {printf("|minussym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        TERM(identArray);  
+        TERM(identArray, file);  
         while (token == plussym || token == minussym)
         {
             if (token == plussym)
             {
                 tokenIndex++;
                 token = tokenArr[tokenIndex];
-                TERM(identArray);
+                TERM(identArray, file);
                 // emit ADD
         assemblyTable[assemIndex][0] = 'A';
         assemblyTable[assemIndex][1] = 'D';
         assemblyTable[assemIndex][2] = 'D';    
         assemIndex++;   
+        fprintf(file, "2 0 1");
             }
             else
             {
                 printf("/nElse in EXPRESSION-minus");
                 tokenIndex++;
                 token = tokenArr[tokenIndex];
-                TERM(identArray);
+                TERM(identArray, file);
                 // emit SUB
         assemblyTable[assemIndex][0] = 'S';
         assemblyTable[assemIndex][1] = 'U';
         assemblyTable[assemIndex][2] = 'B';    
-        assemIndex++;   
+        assemIndex++; 
+        fprintf(file, "2 0 2");  
             }
         }
     }
@@ -1143,7 +1151,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
         printf("|plussym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        TERM(identArray);
+        TERM(identArray, file);
         printf("\nToken after Term in plussym expr: %d", token);
         while (token == plussym || token == minussym)
         {   
@@ -1154,24 +1162,26 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 printf("|if plussym");
                 tokenIndex++;
                 token = tokenArr[tokenIndex];
-                TERM(identArray);
+                TERM(identArray, file);
                 // emit ADD
                 assemblyTable[assemIndex][0] = 'A';
                 assemblyTable[assemIndex][1] = 'D';
                 assemblyTable[assemIndex][2] = 'D';    
-                assemIndex++;   
+                assemIndex++;  
+                fprintf(file, "2 0 1"); 
             }
             else
             {
                 printf("/nElse in EXPRESSION-plus");
                 tokenIndex++;
                 token = tokenArr[tokenIndex];
-                TERM(identArray);
+                TERM(identArray, file);
                 // emit SUB
                 assemblyTable[assemIndex][0] = 'S';
                 assemblyTable[assemIndex][1] = 'U';
                 assemblyTable[assemIndex][2] = 'B';    
                 assemIndex++;  
+                fprintf(file, "2 0 2");
             }
         }
     }
@@ -1179,11 +1189,11 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
 
 };
 
-void TERM(char identArray[50][12])
+void TERM(char identArray[50][12], FILE* file)
 {
     printf("\ncalled TERM");
     printf("|Token:%d", token);//current token
-    FACTOR(identArray);
+    FACTOR(identArray, file);
     printf("\nFACTOR->TERM loop");
     printf("|Token:%d", token);
     while (token == multsym || token == slashsym)
@@ -1192,30 +1202,32 @@ void TERM(char identArray[50][12])
         {printf("|multsym");
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            FACTOR(identArray);
+            FACTOR(identArray, file);
             // emit MUL
         assemblyTable[assemIndex][0] = 'M';
         assemblyTable[assemIndex][1] = 'U';
         assemblyTable[assemIndex][2] = 'L';    
         assemIndex++;   
+        fprintf(file, "2 0 3");
         }
         else if (token == slashsym)
         {printf("|slashsym");
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            FACTOR(identArray);
+            FACTOR(identArray, file);
             // emit DIV
         assemblyTable[assemIndex][0] = 'D';
         assemblyTable[assemIndex][1] = 'I';
         assemblyTable[assemIndex][2] = 'V';    
-        assemIndex++;   
+        assemIndex++; 
+        fprintf(file, "2 0 4");  
         }
         else
         {
             printf("\nTerm Else");
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            FACTOR(identArray);
+            FACTOR(identArray, file);
             // emit MOD
         assemblyTable[assemIndex][0] = 'M';
         assemblyTable[assemIndex][1] = 'O';
@@ -1226,7 +1238,7 @@ void TERM(char identArray[50][12])
 printf("||Exit loop/TERM");
 };
 
-void FACTOR(char identArray[50][12])
+void FACTOR(char identArray[50][12], FILE* file)
 {
     printf("\ncalled FACTOR");
     printf("|Token:%d", token);
@@ -1257,6 +1269,7 @@ void FACTOR(char identArray[50][12])
         assemblyTable[assemIndex][1] = 'I';
         assemblyTable[assemIndex][2] = 'T';    
         assemIndex++;
+        fprintf(file, "1 0 %d", symbolTable[symIdx].val);
         }
         else //(var)
         {
@@ -1264,7 +1277,8 @@ void FACTOR(char identArray[50][12])
         assemblyTable[assemIndex][0] = 'L';
         assemblyTable[assemIndex][1] = 'O';
         assemblyTable[assemIndex][2] = 'D';    
-        assemIndex++;   
+        assemIndex++;
+        fprintf(file, "1 0 %d", symbolTable[symIdx].val);   
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -1287,7 +1301,7 @@ void FACTOR(char identArray[50][12])
     {printf("|lparentsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        EXPRESSION(identArray);
+        EXPRESSION(identArray, file);
         if (token != rparentsym)
         {printf("|rparentsym");
             printf("Error: right parenthesis must follow left parenthesis");
