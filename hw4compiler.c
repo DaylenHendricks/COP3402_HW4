@@ -501,10 +501,12 @@ int main(int argc, char *fileName[])
 //end of lexical analyser/scanner_________________________________
 
 //begin of syntactic analyser / parser____________________________
+    //printf("\n\nend scan\n begin parser:\n");
 
 // PROGRAM
     int token = tokenArr[0];
     tokenIndex = 0; //function's tokenArray index
+    FILE* outFile = fopen("elf.txt", 'w');
 
     block(identArr);
     token = tokenArr[tokenIndex];
@@ -512,7 +514,7 @@ int main(int argc, char *fileName[])
     if (token != periodsym)
     {
         printf("Error: program must end with period");
-        exit(0);
+        exit(remove("elf.txt"));
     }
     for(int i = 1; i < tp; i++)
     {
@@ -551,7 +553,6 @@ void block(char identArr[50][12])
     token = tokenArr[tokenIndex];
     ConstDeclaration(identArr);
     int numVars = VarDeclaration(identArr);
-    ProcedureDeclaration(identArr);
     //emit INC (M = 3 + numVars)
         assemblyTable[assemIndex][0] = 'I';
         assemblyTable[assemIndex][1] = 'N';
@@ -624,7 +625,7 @@ void ConstDeclaration(char identArr[50][12])
             if (token != identsym)
             {
                 printf("Error: constant keyword must be followed by identifier");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             printf("|token is identsym");
             tokenIndex++;
@@ -643,21 +644,21 @@ void ConstDeclaration(char identArr[50][12])
             if (symbolTableCheck(tempName) != -1)
             {
                 printf("Error: symbol name has already been declared");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             tokenIndex++;
             token = tokenArr[tokenIndex];
             if (token != eqsym)
             {
                 printf("Error: constants must be assigned with =");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             tokenIndex++;
             token = tokenArr[tokenIndex];
             if (token != numbersym)
             {
                 printf("Error: constants must be assigned an integer value");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             tokenIndex++;
             token = tokenArr[tokenIndex];
@@ -669,7 +670,7 @@ void ConstDeclaration(char identArr[50][12])
         if (token != semicolonsym)
         {
             printf("Error: constant declarations must be followed by a semicolon");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -694,7 +695,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
             if (token != identsym)
             {
                 printf("Error: var keywords must be followed by identifier");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             tokenIndex++;
             token = tokenArr[tokenIndex];
@@ -710,7 +711,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
             if (symbolTableCheck(tempName) != -1)
             {
                 printf("Error: symbol name has already been declared");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             insertSymbolTable(2, tempName, 0, 0, numVars + 2);
             printf("|name stored:%s", tempName);
@@ -721,7 +722,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
         if (token != semicolonsym)
         {
             printf("Error: variable declarations must be followed by a semicolon");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -732,7 +733,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
 
 void ProcedureDeclaration(char identArray[50][12])
 {
-    printf("\ncalled PROCEDUREDECLARATION");
+    printf("called PROCEDUREDECLARATION");
     printf("|token: %d", token);
 
     do
@@ -743,7 +744,6 @@ void ProcedureDeclaration(char identArray[50][12])
         if (token != identsym)
         {
             //error
-            exit(0);
         }
 
         tokenIndex++;
@@ -751,7 +751,6 @@ void ProcedureDeclaration(char identArray[50][12])
         if (token != semicolonsym)
         {
             //error
-            exit(0);
         }
 
         tokenIndex++;
@@ -760,7 +759,6 @@ void ProcedureDeclaration(char identArray[50][12])
         if (token != semicolonsym)
         {
             //error
-            exit(0);
         }
     }   while (token == procsym);
     /*
@@ -777,6 +775,7 @@ GET(TOKEN)
 end;
 */
 };
+
 
 int STATEMENT(char identArray[50][12])
 {
@@ -801,12 +800,12 @@ int STATEMENT(char identArray[50][12])
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         if (symbolTable[symIdx].kind != 2 /*(not a var)*/)
         {
             printf("Error: only variable values may be altered");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -816,7 +815,7 @@ int STATEMENT(char identArray[50][12])
         {
             printf("|token:%d", token);
             printf("Error: assignment statements must use :=");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         printf("|becomesym");
         tokenIndex++;
@@ -837,7 +836,7 @@ int STATEMENT(char identArray[50][12])
         if(token != identsym)
         {
             printf("Error: identifier must follow call");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         else
         {
@@ -856,7 +855,7 @@ int STATEMENT(char identArray[50][12])
             if (symIdx == -1)
             {
                 printf("Error: undeclared identifier");
-                exit(0);
+                exit(remove("elf.txt"));
             }
             if(symbolTable[symIdx].kind == 3)
             {
@@ -865,7 +864,7 @@ int STATEMENT(char identArray[50][12])
             else
             {
                 printf("Error: call must be followed by a procedure identifier");
-                exit(0);
+                exit(remove("elf.txt"));
             }
         }
         tokenIndex++;
@@ -891,7 +890,7 @@ int STATEMENT(char identArray[50][12])
         if (token != endsym)
         {
             printf("Error: begin must be followed by end");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         printf("|endsym");
         tokenIndex++;
@@ -913,7 +912,7 @@ int STATEMENT(char identArray[50][12])
         if (token != thensym)
         {printf("|thensym");
             printf("Error: if must be followed by then");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         printf("|thensym");
         tokenIndex++;
@@ -924,8 +923,8 @@ int STATEMENT(char identArray[50][12])
         // code[jpcIdx].M = current code index
         if(token != fisym)
         {
-        printf("Error: then must be followed by fi");
-        exit(0);
+            printf("Error: then must be followed by fi");
+            exit(remove("elf.txt"));
         }
         printf("|fisym");
         tokenIndex++;
@@ -941,7 +940,7 @@ int STATEMENT(char identArray[50][12])
         if (token != dosym)
         {
             printf("Error: while must be followed by do");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -968,7 +967,7 @@ int STATEMENT(char identArray[50][12])
         if (token != identsym)
         {
             printf("Error: const, var, and read keywords must be followed by identifier");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -984,12 +983,12 @@ int STATEMENT(char identArray[50][12])
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         if (symbolTable[symIdx].kind != 2 /*(not a var)*/)
         {
             printf("Error: only variable values may be altered");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -1095,7 +1094,7 @@ void CONDITION(char identArray[50][12])
         else
         {
             printf("Error: condition must contain comparison operator");
-            exit(0);
+            exit(remove("elf.txt"));
         }
     }
     printf("||Exit CONDITION");
@@ -1249,7 +1248,7 @@ void FACTOR(char identArray[50][12])
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         if (symbolTable[symIdx].kind == 1) //(const)
         {
@@ -1292,7 +1291,7 @@ void FACTOR(char identArray[50][12])
         if (token != rparentsym)
         {printf("|rparentsym");
             printf("Error: right parenthesis must follow left parenthesis");
-            exit(0);
+            exit(remove("elf.txt"));
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -1300,7 +1299,7 @@ void FACTOR(char identArray[50][12])
     else
     {
         printf("Error: arithmetic equations must contain operands, parentheses, numbers, or symbols");
-        exit(0);
+        exit(remove("elf.txt"));
     }
     printf("||Exit FACTOR");
 };
