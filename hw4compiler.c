@@ -526,6 +526,10 @@ int main(int argc, char *fileName[])
         printf("Error: program must end with period");
         exit(0);
     }
+    codeTable[cx].opcode = 9;
+    codeTable[cx].l = 0;
+    codeTable[cx].m = 3;
+    cx++;
     for(int i = 1; i < tp; i++)
     {
         printf("\nkind: %d", symbolTable[i].kind);
@@ -547,7 +551,7 @@ ________________________________________________________________________________
 void printAssembly()
 {
     printf("\n\nLine\tOP\tL\tM");
-    for(int i = 0; i <= cx; i++)
+    for(int i = 0; i < cx; i++)
     {
         printf("\n%d\t%d\t%d\t%d", i, codeTable[i].opcode, codeTable[i].l, codeTable[i].m);
     }
@@ -555,7 +559,7 @@ void printAssembly()
 
 void block(char identArr[50][12])
 {
-
+    int tp0;//initial table index
     printf("\ncalled block");
     printf("|token: %d", token);
     lexlvl++;
@@ -563,14 +567,32 @@ void block(char identArr[50][12])
     token = tokenArr[tokenIndex];
 
     printf("\n||creating temp JMP||");
+    tp0 = tp;//getting current index for reference later
+    printf("initial cx: %d", cx);
+    symbolTable[tp0].addr = cx;//storing current cx
+
     codeTable[cx].opcode = 7;
-    codeTable[cx].l = lexlvl;
+    codeTable[cx].l = 0;
     codeTable[cx].m = 0;//temporary jump value until fixed later
     cx++;
+    printf("initial cx2: %d", cx);
     ConstDeclaration(identArr);
     int numVars = VarDeclaration(identArr);
     ProcedureDeclaration(identArr);
-    //emit INC (M = 3 + numVars) 
+    printf("\n||emit fix jmp||\n");
+    codeTable[symbolTable[tp0].addr].m = (cx * 3);//fixes temp jump val
+    printf("\nsymbol addr of tp0: %d", symbolTable[tp0].addr);
+    printf("initial cx3: %d", cx);
+/*
+code[table[tx0].adr].a=cx; // The tentative jump address is fixed up
+table[tx0].adr=cx; // the space for address for the above jmp is now occupied
+by the new cx
+cx0=cx; gen(inc,0,dx); // inc 0,dx is generated. At run time, the space of dx is
+secured
+statement(lev,&tx);
+gen(opr,0,0)
+*/
+    //emit INC (M = 3 + numVars)
     printf("\n||emit INC||");
     codeTable[cx].opcode = 6;
     codeTable[cx].l = 0;
@@ -578,6 +600,12 @@ void block(char identArr[50][12])
     cx++;
     STATEMENT(identArr);
     printf("token in block: %d", token);
+    printf("\n||emit OPR||");
+    codeTable[cx].opcode = 2;
+    codeTable[cx].l = 0;
+    codeTable[cx].m = 0;
+    cx++;
+
     printf("||Exit BLOCK");
     lexlvl--;
 };
@@ -872,7 +900,7 @@ int STATEMENT(char identArray[50][12])
         printf("\n||emit STO||");
         codeTable[cx].opcode = 4;
         codeTable[cx].l = 0;
-        codeTable[cx].m = symbolTable[tp].addr;
+        codeTable[cx].m = symbolTable[symIdx].addr;
         cx++;
         return(0);
     }
@@ -910,7 +938,7 @@ int STATEMENT(char identArray[50][12])
                 //gen(CAL, level – symbollevel(i), symboladdr(i));
                 printf("\n||emit CAL||");
                 codeTable[cx].opcode = 5;
-                codeTable[cx].l = 0;//needs to be updated
+                codeTable[cx].l = lexlvl - symbolTable[tp].level;//needs to be updated
                 codeTable[cx].m = tp;
                 cx++;
             }
@@ -960,9 +988,9 @@ int STATEMENT(char identArray[50][12])
         // emit JPC
         printf("\n||emit JPC");
         jpcIdx = cx;
-        codeTable[cx].opcode = 7;
+        codeTable[cx].opcode = 8;
         codeTable[cx].l = 0;
-        codeTable[cx].m = 0;
+        codeTable[cx].m = jpcIdx;
         cx++;
         if (token != thensym)
         {printf("|thensym");
@@ -1007,7 +1035,7 @@ int STATEMENT(char identArray[50][12])
         jpcIdx = cx;
         codeTable[cx].opcode = 8;
         codeTable[cx].l = 0;
-        codeTable[cx].m = 0;
+        codeTable[cx].m = jpcIdx;
         cx++;
         STATEMENT(identArray);
         // emit JMP (M = loopIdx)
