@@ -52,7 +52,7 @@ int token = 0;//token for parser
 int finalToken;//token for period check
 char assemblyTable[50][3];//table for assembly code
 int assemIndex = 0;
-int lexlvl = 0;
+int lexlvl = -1;
 
 void printAssembly();
 void block(char identArray[50][12]);
@@ -556,7 +556,9 @@ void block(char identArr[50][12])
 {
 
     printf("\ncalled block");
+    printf("|token: %d", token);
     lexlvl++;
+    printf("|lexlvl: %d", lexlvl);
     token = tokenArr[tokenIndex];
 
     codeTable[cx].opcode = 7;
@@ -742,58 +744,71 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
 
 void ProcedureDeclaration(char identArray[50][12])
 {
-    printf("called PROCEDUREDECLARATION");
+    printf("\ncalled PROCEDUREDECLARATION");
     printf("|token: %d", token);
-
-    do
+    if (token == procsym)
     {
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        if (token != identsym)
+        do
         {
-            //error
-            exit(0);
-        }
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        char tempName [11] = {'#'};
-        for(int i = 0; identArray[varCount][i] != '#'; i++)
-        {
-            printf("|%dletter(s), stored:", (i + 1));
-            tempName[i] = identArray[varCount][i];
-            printf("%c", tempName[i]);
-        }
-        varCount++;
-        printf("|varcount:%d", varCount);
-        insertSymbolTable(3, tempName, 0, lexlvl, cx);
-        if (token != semicolonsym)
-        {
-            //error
-            exit(0);
-        }
+            printf("|Procedure loop");
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            if (token != identsym)
+            {
+                printf("Procedure error 1");
+                exit(0);
+            }
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            char tempName [11] = {'#'};
+            for(int i = 0; identArray[varCount][i] != '#'; i++)
+            {
+                printf("|%dletter(s), stored:", (i + 1));
+                tempName[i] = identArray[varCount][i];
+                printf("%c", tempName[i]);
+            }
+            varCount++;
+            printf("|varcount:%d", varCount);
+            insertSymbolTable(3, tempName, 0, lexlvl, cx);
+            printf("toke: %d", token);
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            if (token != semicolonsym)
+            {
+                printf("Procedure error 2");
+                exit(0);
+            }
 
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        block(identArray);
-        if (token != semicolonsym)
-        {
-            //error
-            exit(0);
-        }
-    }   while (token == procsym);
-    /*
-    EBNF: procedure-declaration ::= { "procedure" ident ";" block ";" }
-    while TOKEN = "procsym" do begin
-GET(TOKEN);
-if TOKEN != “identsym” then ERROR;
-GET(TOKEN);
-if TOKEN != "semicolomsym" then ERROR;
-GET(TOKEN);
-BLOCK;
-if TOKEN != "semicolomsym" then ERROR;
-GET(TOKEN)
-end;
-*/
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            block(identArray);
+            if (token != semicolonsym)
+            {
+                printf("Procedure error 3");
+                exit(0);
+            }
+            printf("|semicolonsym in procedure");
+            tokenIndex++;
+            token = tokenArr[tokenIndex];
+            printf("|token at end of procedure declaration: %d", token);
+            printf("Exit PROCEDUREDECLARATION");
+        }   while (token == procsym);
+        /*
+        EBNF: procedure-declaration ::= { "procedure" ident ";" block ";" }
+        while TOKEN = "procsym" do begin
+    GET(TOKEN);
+    if TOKEN != “identsym” then ERROR;
+    GET(TOKEN);
+    if TOKEN != "semicolomsym" then ERROR;
+    GET(TOKEN);
+    BLOCK;
+    if TOKEN != "semicolomsym" then ERROR;
+    GET(TOKEN)
+    end;
+    */
+    }
+    else
+    printf("||No procedures detected");
 };
 
 
@@ -851,6 +866,7 @@ int STATEMENT(char identArray[50][12])
     }
     else if(token == callsym)
     {
+        printf("|callsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
         if(token != identsym)
