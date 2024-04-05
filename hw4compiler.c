@@ -1157,7 +1157,8 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 // emit ADD
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
-                codeTable[cx].m = 1;    
+                codeTable[cx].m = 1; 
+                cx++;   
             }
             else
             {
@@ -1169,6 +1170,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 2;  
+                cx++;
             }
         }
     }
@@ -1193,6 +1195,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 1;   
+                cx++;
             }
             else
             {
@@ -1204,6 +1207,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 2;  
+                cx++;
             }
         }
     }
@@ -1228,7 +1232,8 @@ void TERM(char identArray[50][12])
             // emit MUL
         codeTable[cx].opcode = 2;
         codeTable[cx].l = 0;
-        codeTable[cx].m = 3; 
+        codeTable[cx].m = 3;
+        cx++;
         }
         else if (token == slashsym)
         {printf("|slashsym");
@@ -1239,6 +1244,7 @@ void TERM(char identArray[50][12])
         codeTable[cx].opcode = 2;
         codeTable[cx].l = 0;
         codeTable[cx].m = 4;
+        cx++;
         }
         else
         {
@@ -1282,6 +1288,7 @@ void FACTOR(char identArray[50][12])
         codeTable[cx].opcode = 1;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].val;
+        cx++;
         }
         else //(var)
         {
@@ -1289,6 +1296,7 @@ void FACTOR(char identArray[50][12])
         codeTable[cx].opcode = 3;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].addr;
+        cx++;
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
@@ -1300,6 +1308,7 @@ void FACTOR(char identArray[50][12])
         codeTable[cx].opcode = 1;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].val;
+        cx++;
 
         tokenIndex++;
         token = tokenArr[tokenIndex];
