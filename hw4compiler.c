@@ -621,6 +621,7 @@ int symbolTableCheck(char name[11])
                 {
                     printf("|WORD FOUND!\n");
                     printf("||exit SYMTBLCHCK");
+                    printf("|return: %d", i);
                     return i;
                 }
             }
@@ -628,6 +629,7 @@ int symbolTableCheck(char name[11])
 
     }
     printf("||exit SYMTBLCHCK");
+    printf("|return: -1");
     return -1;
 }
 
@@ -840,6 +842,7 @@ int STATEMENT(char identArray[50][12])
         printf("|name stored:%s", tempName);
         varCount++;
         symIdx = symbolTableCheck(tempName);
+        printf("|Current symidx: %d", symIdx);
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
@@ -1037,6 +1040,8 @@ int STATEMENT(char identArray[50][12])
         }
         printf("|name stored:%s", tempName);
         symIdx = symbolTableCheck(tempName);
+        printf("|Current symidx: %d", symIdx);
+
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
@@ -1311,7 +1316,7 @@ void FACTOR(char identArray[50][12])
 {
     printf("\ncalled FACTOR");
     printf("|Token:%d", token);
-    int symIdx;
+    int symIdx = 0;
     if ((tokenArr[tokenIndex]) == identsym)
     {printf("|identsym");
         tokenIndex++;
@@ -1326,6 +1331,7 @@ void FACTOR(char identArray[50][12])
         printf("|name stored:%s", tempName);
         varCount++;
         symIdx = symbolTableCheck(tempName);
+        printf("|Current symidx: %d", symIdx);
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
@@ -1335,6 +1341,8 @@ void FACTOR(char identArray[50][12])
         {
             // emit LIT (M = table[symIdx].Value)
         printf("\n||emit LIT||");
+        printf("|Symidx: %d", symIdx);
+        printf("|tp: %d", tp);
         codeTable[cx].opcode = 1;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].val;
@@ -1344,6 +1352,8 @@ void FACTOR(char identArray[50][12])
         {
             // emit LOD (M = table[symIdx].addr)
         printf("\n||emit LOD||");
+        printf("|Symidx: %d", symIdx);
+        printf("|tp: %d", tp);
         codeTable[cx].opcode = 3;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].addr;
@@ -1355,16 +1365,18 @@ void FACTOR(char identArray[50][12])
     else if ((tokenArr[tokenIndex]) == numbersym)
     {   
         printf("|numbersym");
-        //emit LIT (M = table[symIdx].Value)
-        printf("\n||emit LIT||");
-        codeTable[cx].opcode = 1;
-        codeTable[cx].l = 0;
-        codeTable[cx].m = symbolTable[symIdx].val;
-        cx++;
-
         tokenIndex++;
         token = tokenArr[tokenIndex];
         printf("|token after numbersym: %d", token);
+        symbolTable[tp - 1].val = token;
+        //emit LIT (M = table[symIdx].Value)
+        printf("\n||emit LIT(2)||");
+        printf("|tp: %d", tp);
+        codeTable[cx].opcode = 1;
+        codeTable[cx].l = 0;
+        codeTable[cx].m = symbolTable[tp - 1].val;
+        cx++;
+
         tokenIndex++;
         token = tokenArr[tokenIndex];
     }
