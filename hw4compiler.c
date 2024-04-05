@@ -516,7 +516,7 @@ int main(int argc, char *fileName[])
 // PROGRAM
     int token = tokenArr[0];
     tokenIndex = 0; //function's tokenArray index
-    FILE* outFile = fopen("elf.txt", "w");
+    //FILE* outFile = fopen("elf.txt", "w");
 
     block(identArr);
     token = tokenArr[tokenIndex];
@@ -537,6 +537,7 @@ int main(int argc, char *fileName[])
         printf("\nmark: %d", symbolTable[i].mark);
         printf("\n");
     }
+    printAssembly();
     exit(0);
 }
 
@@ -545,10 +546,10 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________________________*/
 void printAssembly()
 {
-    printf("Line\tOP\tL\tM");
+    printf("\n\nLine\tOP\tL\tM");
     for(int i = 0; i <= cx; i++)
     {
-        printf("%d\t%d\t%d\t%d", i, codeTable[cx].opcode, codeTable[cx].l, codeTable[cx].m);
+        printf("\n%d\t%d\t%d\t%d", i, codeTable[i].opcode, codeTable[i].l, codeTable[i].m);
     }
 };
 
@@ -561,13 +562,20 @@ void block(char identArr[50][12])
     printf("|lexlvl: %d", lexlvl);
     token = tokenArr[tokenIndex];
 
+    printf("\n||creating temp JMP||");
     codeTable[cx].opcode = 7;
     codeTable[cx].l = lexlvl;
     codeTable[cx].m = 0;//temporary jump value until fixed later
+    cx++;
     ConstDeclaration(identArr);
     int numVars = VarDeclaration(identArr);
     ProcedureDeclaration(identArr);
     //emit INC (M = 3 + numVars) 
+    printf("\n||emit INC||");
+    codeTable[cx].opcode = 6;
+    codeTable[cx].l = 0;
+    codeTable[cx].m = 3 + numVars;
+    cx++;
     STATEMENT(identArr);
     printf("token in block: %d", token);
     printf("||Exit BLOCK");
@@ -858,6 +866,7 @@ int STATEMENT(char identArray[50][12])
         finalToken = tokenArr[tokenIndex];
         EXPRESSION(identArray);
         // emit STO (M = table[symIdx].addr)
+        printf("\n||emit STO||");
         codeTable[cx].opcode = 4;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[tp].addr;
@@ -896,6 +905,7 @@ int STATEMENT(char identArray[50][12])
             if(symbolTable[symIdx].kind == 3)
             {
                 //gen(CAL, level – symbollevel(i), symboladdr(i));
+                printf("\n||emit CAL||");
                 codeTable[cx].opcode = 5;
                 codeTable[cx].l = 0;//needs to be updated
                 codeTable[cx].m = tp;
@@ -945,6 +955,7 @@ int STATEMENT(char identArray[50][12])
         CONDITION(identArray);
         // jpcIdx = current code index
         // emit JPC
+        printf("\n||emit JPC");
         jpcIdx = cx;
         codeTable[cx].opcode = 7;
         codeTable[cx].l = 0;
@@ -989,6 +1000,7 @@ int STATEMENT(char identArray[50][12])
         token = tokenArr[tokenIndex];
         // jpcIdx = current code index
         // emit JPC
+        printf("\n||emit JPC(2)");
         jpcIdx = cx;
         codeTable[cx].opcode = 8;
         codeTable[cx].l = 0;
@@ -997,6 +1009,7 @@ int STATEMENT(char identArray[50][12])
         STATEMENT(identArray);
         // emit JMP (M = loopIdx)
         // code[jpcIdx].M = current code index
+        printf("\n||emit JMP(2)");
         codeTable[cx].opcode = 7;
         codeTable[cx].m = loopIdx;
         cx++;
@@ -1037,10 +1050,16 @@ int STATEMENT(char identArray[50][12])
         tokenIndex++;
         token = tokenArr[tokenIndex];
         // emit READ
-        // emit STO (M = table[symIdx].addr)
+        printf("\n||emit READ||");
         codeTable[cx].opcode = 9;
         codeTable[cx].l = 0;
         codeTable[cx].m = 2;
+        cx++;
+        // emit STO (M = table[symIdx].addr)
+        printf("\n||emit STO(2)||");
+        codeTable[cx].opcode = 4;
+        codeTable[cx].l = lexlvl;
+        codeTable[cx].m = 0;
         cx++;
         return(0);
     }
@@ -1050,6 +1069,7 @@ int STATEMENT(char identArray[50][12])
         token = tokenArr[tokenIndex];
         EXPRESSION(identArray);
         // emit WRITE
+        printf("\n||emit WRITE||");
         codeTable[cx].opcode = 9;
         codeTable[cx].l = 0;
         codeTable[cx].m = 1;
@@ -1069,6 +1089,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
         EXPRESSION(identArray);
         // emit ODD
+        printf("\n||emit ODD||");
         codeTable[cx].opcode = 2;
         codeTable[cx].l = 0;
         codeTable[cx].m = 11;
@@ -1084,6 +1105,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit EQL
+        printf("\n||emit EQL||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 5;
@@ -1095,6 +1117,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit NEQ
+        printf("\n||emit NEQ||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 6;
@@ -1106,6 +1129,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit LSS
+        printf("\n||emit LSS||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 7;
@@ -1117,6 +1141,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit LEQ
+        printf("\n||emit LEQ||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 8;
@@ -1128,6 +1153,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit GTR
+        printf("\n||emit GTR||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 9;
@@ -1139,6 +1165,7 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit GEQ
+        printf("\n||emit GEQ||");
             codeTable[cx].opcode = 2;
             codeTable[cx].l = 0;
             codeTable[cx].m = 10;
@@ -1171,6 +1198,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 token = tokenArr[tokenIndex];
                 TERM(identArray);
                 // emit ADD
+                printf("\n||emit ADD||");
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 1; 
@@ -1183,6 +1211,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 token = tokenArr[tokenIndex];
                 TERM(identArray);
                 // emit SUB
+                printf("\n||emit SUB||");
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 2;  
@@ -1208,6 +1237,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 token = tokenArr[tokenIndex];
                 TERM(identArray);
                 // emit ADD
+                printf("\n||emit ADD||");
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 1;   
@@ -1220,6 +1250,7 @@ void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
                 token = tokenArr[tokenIndex];
                 TERM(identArray);
                 // emit SUB
+                printf("\n||emit SUB||");
                 codeTable[cx].opcode = 2;
                 codeTable[cx].l = 0;
                 codeTable[cx].m = 2;  
@@ -1246,6 +1277,7 @@ void TERM(char identArray[50][12])
             token = tokenArr[tokenIndex];
             FACTOR(identArray);
             // emit MUL
+        printf("\n||emit MUL||");
         codeTable[cx].opcode = 2;
         codeTable[cx].l = 0;
         codeTable[cx].m = 3;
@@ -1257,10 +1289,11 @@ void TERM(char identArray[50][12])
             token = tokenArr[tokenIndex];
             FACTOR(identArray);
             // emit DIV
-        codeTable[cx].opcode = 2;
-        codeTable[cx].l = 0;
-        codeTable[cx].m = 4;
-        cx++;
+            printf("\n||emit DIV||");
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 4;
+            cx++;
         }
         else
         {
@@ -1301,6 +1334,7 @@ void FACTOR(char identArray[50][12])
         if (symbolTable[symIdx].kind == 1) //(const)
         {
             // emit LIT (M = table[symIdx].Value)
+        printf("\n||emit LIT||");
         codeTable[cx].opcode = 1;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].val;
@@ -1309,6 +1343,7 @@ void FACTOR(char identArray[50][12])
         else //(var)
         {
             // emit LOD (M = table[symIdx].addr)
+        printf("\n||emit LOD||");
         codeTable[cx].opcode = 3;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].addr;
@@ -1321,6 +1356,7 @@ void FACTOR(char identArray[50][12])
     {   
         printf("|numbersym");
         //emit LIT (M = table[symIdx].Value)
+        printf("\n||emit LIT||");
         codeTable[cx].opcode = 1;
         codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[symIdx].val;
