@@ -801,7 +801,7 @@ int STATEMENT(char identArray[50][12])
 {
     printf("\ncalled STATEMENT");
     printf("|Token:%d", token);
-    int symIdx, jmpcx, loopIdx;
+    int symIdx, jpcIdx, loopIdx;
 
     if (token == identsym)
     {printf("|identsym");
@@ -843,6 +843,8 @@ int STATEMENT(char identArray[50][12])
         finalToken = tokenArr[tokenIndex];
         EXPRESSION(identArray);
         // emit STO (M = table[symIdx].addr)
+        codeTable[cx].opcode = 4;
+        codeTable[cx].l = 0;
         codeTable[cx].m = symbolTable[tp].addr;
         cx++;
         return(0);
@@ -878,6 +880,10 @@ int STATEMENT(char identArray[50][12])
             if(symbolTable[symIdx].kind == 3)
             {
                 //gen(CAL, level – symbollevel(i), symboladdr(i));
+                codeTable[cx].opcode = 5;
+                codeTable[cx].l = 0;//needs to be updated
+                codeTable[cx].m = tp;
+                cx++;
             }
             else
             {
@@ -923,8 +929,10 @@ int STATEMENT(char identArray[50][12])
         CONDITION(identArray);
         // jpcIdx = current code index
         // emit JPC
+        jpcIdx = cx;
         codeTable[cx].opcode = 7;
-        jmpcx = cx;
+        codeTable[cx].l = 0;
+        codeTable[cx].m = 0;
         cx++;
         if (token != thensym)
         {printf("|thensym");
@@ -938,7 +946,7 @@ int STATEMENT(char identArray[50][12])
         printf("|then statement done");
         printf("|token %d", token);
         // code[jpcIdx].M = current code index
-        codeTable[jmpcx].m = cx;
+        codeTable[jpcIdx].m = cx;
         if(token != fisym)
         {
             printf("Error: then must be followed by fi");
@@ -965,8 +973,10 @@ int STATEMENT(char identArray[50][12])
         token = tokenArr[tokenIndex];
         // jpcIdx = current code index
         // emit JPC
-        jmpcx = cx;
+        jpcIdx = cx;
         codeTable[cx].opcode = 8;
+        codeTable[cx].l = 0;
+        codeTable[cx].m = 0;
         cx++;
         STATEMENT(identArray);
         // emit JMP (M = loopIdx)
@@ -974,7 +984,7 @@ int STATEMENT(char identArray[50][12])
         codeTable[cx].opcode = 7;
         codeTable[cx].m = loopIdx;
         cx++;
-        codeTable[jmpcx].m = cx;
+        codeTable[jpcIdx].m = cx;
         return(0);
     }
     else if (token == readsym)
@@ -1013,6 +1023,7 @@ int STATEMENT(char identArray[50][12])
         // emit READ
         // emit STO (M = table[symIdx].addr)
         codeTable[cx].opcode = 9;
+        codeTable[cx].l = 0;
         codeTable[cx].m = 2;
         cx++;
         return(0);
@@ -1024,6 +1035,7 @@ int STATEMENT(char identArray[50][12])
         EXPRESSION(identArray);
         // emit WRITE
         codeTable[cx].opcode = 9;
+        codeTable[cx].l = 0;
         codeTable[cx].m = 1;
         cx++;
         return(0);
@@ -1041,6 +1053,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
         EXPRESSION(identArray);
         // emit ODD
+        codeTable[cx].opcode = 2;
+        codeTable[cx].l = 0;
+        codeTable[cx].m = 11;
+        cx++;
 
     }
     else
@@ -1052,10 +1068,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit EQL
-        assemblyTable[assemIndex][0] = 'E';
-        assemblyTable[assemIndex][1] = 'Q';
-        assemblyTable[assemIndex][2] = 'L';    
-        assemIndex++;  
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 5;
+            cx++;
         }
         else if (token == neqsym)
         {printf("|neqsym");
@@ -1063,10 +1079,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit NEQ
-        assemblyTable[assemIndex][0] = 'N';
-        assemblyTable[assemIndex][1] = 'E';
-        assemblyTable[assemIndex][2] = 'Q';    
-        assemIndex++;
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 6;
+            cx++;
         }
         else if (token == lessym)
         {printf("|lessym");
@@ -1074,10 +1090,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit LSS
-        assemblyTable[assemIndex][0] = 'L';
-        assemblyTable[assemIndex][1] = 'S';
-        assemblyTable[assemIndex][2] = 'S';    
-        assemIndex++;  
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 7;
+            cx++;
         }
         else if (token == leqsym)
         {printf("|leqsym");
@@ -1085,10 +1101,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit LEQ
-        assemblyTable[assemIndex][0] = 'L';
-        assemblyTable[assemIndex][1] = 'E';
-        assemblyTable[assemIndex][2] = 'Q';    
-        assemIndex++;  
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 8;
+            cx++;
         }
         else if (token == gtrsym)
         {printf("|gtrsym");
@@ -1096,10 +1112,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit GTR
-        assemblyTable[assemIndex][0] = 'G';
-        assemblyTable[assemIndex][1] = 'T';
-        assemblyTable[assemIndex][2] = 'R';    
-        assemIndex++;  
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 9;
+            cx++;
         }
         else if (token == geqsym)
         {printf("|geqsym");
@@ -1107,10 +1123,10 @@ void CONDITION(char identArray[50][12])
         token = tokenArr[tokenIndex];
             EXPRESSION(identArray);
             // emit GEQ
-        assemblyTable[assemIndex][0] = 'G';
-        assemblyTable[assemIndex][1] = 'E';
-        assemblyTable[assemIndex][2] = 'Q';    
-        assemIndex++;  
+            codeTable[cx].opcode = 2;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 10;
+            cx++;
         }
         else
         {
@@ -1119,208 +1135,4 @@ void CONDITION(char identArray[50][12])
         }
     }
     printf("||Exit CONDITION");
-};
-
-void EXPRESSION(char identArray[50][12])//(HINT: modify it to match the grammar)
-{
-    printf("\ncalled EXPRESSION");
-    printf("|Token:%d", token);
-    TERM(identArray);
-
-    if (token == minussym)
-    {printf("|minussym");
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        TERM(identArray);  
-        while (token == plussym || token == minussym)
-        {
-            if (token == plussym)
-            {
-                tokenIndex++;
-                token = tokenArr[tokenIndex];
-                TERM(identArray);
-                // emit ADD
-        assemblyTable[assemIndex][0] = 'A';
-        assemblyTable[assemIndex][1] = 'D';
-        assemblyTable[assemIndex][2] = 'D';    
-        assemIndex++;   
-            }
-            else
-            {
-                printf("/nElse in EXPRESSION-minus");
-                tokenIndex++;
-                token = tokenArr[tokenIndex];
-                TERM(identArray);
-                // emit SUB
-        assemblyTable[assemIndex][0] = 'S';
-        assemblyTable[assemIndex][1] = 'U';
-        assemblyTable[assemIndex][2] = 'B';    
-        assemIndex++; 
-            }
-        }
-    }
-    else if (token == plussym)
-    {
-        printf("|plussym");
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        TERM(identArray);
-        printf("\nToken after Term in plussym expr: %d", token);
-        while (token == plussym || token == minussym)
-        {   
-            printf("|While in plus/minus loop in expr");
-            printf("|Token in loop: %d", token);
-            if (token == plussym)
-            {
-                printf("|if plussym");
-                tokenIndex++;
-                token = tokenArr[tokenIndex];
-                TERM(identArray);
-                // emit ADD
-                assemblyTable[assemIndex][0] = 'A';
-                assemblyTable[assemIndex][1] = 'D';
-                assemblyTable[assemIndex][2] = 'D';    
-                assemIndex++;  
-            }
-            else
-            {
-                printf("/nElse in EXPRESSION-plus");
-                tokenIndex++;
-                token = tokenArr[tokenIndex];
-                TERM(identArray);
-                // emit SUB
-                assemblyTable[assemIndex][0] = 'S';
-                assemblyTable[assemIndex][1] = 'U';
-                assemblyTable[assemIndex][2] = 'B';    
-                assemIndex++;  
-            }
-        }
-    }
-    printf("||exit EXPRESSION");
-
-};
-
-void TERM(char identArray[50][12])
-{
-    printf("\ncalled TERM");
-    printf("|Token:%d", token);//current token
-    FACTOR(identArray);
-    printf("\nFACTOR->TERM loop");
-    printf("|Token:%d", token);
-    while (token == multsym || token == slashsym)
-    {
-        if (token == multsym)
-        {printf("|multsym");
-            tokenIndex++;
-            token = tokenArr[tokenIndex];
-            FACTOR(identArray);
-            // emit MUL
-        assemblyTable[assemIndex][0] = 'M';
-        assemblyTable[assemIndex][1] = 'U';
-        assemblyTable[assemIndex][2] = 'L';    
-        assemIndex++;   
-        }
-        else if (token == slashsym)
-        {printf("|slashsym");
-            tokenIndex++;
-            token = tokenArr[tokenIndex];
-            FACTOR(identArray);
-            // emit DIV
-        assemblyTable[assemIndex][0] = 'D';
-        assemblyTable[assemIndex][1] = 'I';
-        assemblyTable[assemIndex][2] = 'V';    
-        assemIndex++; 
-        }
-        else
-        {
-            printf("\nTerm Else");
-            tokenIndex++;
-            token = tokenArr[tokenIndex];
-            FACTOR(identArray);
-            // emit MOD
-        assemblyTable[assemIndex][0] = 'M';
-        assemblyTable[assemIndex][1] = 'O';
-        assemblyTable[assemIndex][2] = 'D';    
-        assemIndex++;   
-        }
-}
-printf("||Exit loop/TERM");
-};
-
-void FACTOR(char identArray[50][12])
-{
-    printf("\ncalled FACTOR");
-    printf("|Token:%d", token);
-    int symIdx;
-    if ((tokenArr[tokenIndex]) == identsym)
-    {printf("|identsym");
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        char tempName [11] = {'#'};
-        for(int i = 0; i < token; i++)
-        {
-            printf("|%dletter(s), stored:", (i + 1));
-            tempName[i] = identArray[varCount][i];
-            printf("%c", tempName[i]);
-        }
-        printf("|name stored:%s", tempName);
-        varCount++;
-        symIdx = symbolTableCheck(tempName);
-        if (symIdx == -1)
-        {
-            printf("Error: undeclared identifier");
-            exit(0);
-        }
-        if (symbolTable[symIdx].kind == 1) //(const)
-        {
-            // emit LIT (M = table[symIdx].Value)
-        assemblyTable[assemIndex][0] = 'L';
-        assemblyTable[assemIndex][1] = 'I';
-        assemblyTable[assemIndex][2] = 'T';    
-        assemIndex++;
-        }
-        else //(var)
-        {
-            // emit LOD (M = table[symIdx].addr)
-        assemblyTable[assemIndex][0] = 'L';
-        assemblyTable[assemIndex][1] = 'O';
-        assemblyTable[assemIndex][2] = 'D';    
-        assemIndex++;
-        }
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-    }
-    else if ((tokenArr[tokenIndex]) == numbersym)
-    {   
-        printf("|numbersym");
-        assemblyTable[assemIndex][0] = 'L';
-        assemblyTable[assemIndex][1] = 'I';
-        assemblyTable[assemIndex][2] = 'T';
-        assemIndex++;   
-
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        printf("|token after numbersym: %d", token);
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-    }
-    else if (token == lparentsym)
-    {printf("|lparentsym");
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-        EXPRESSION(identArray);
-        if (token != rparentsym)
-        {printf("|rparentsym");
-            printf("Error: right parenthesis must follow left parenthesis");
-            exit(0);
-        }
-        tokenIndex++;
-        token = tokenArr[tokenIndex];
-    }
-    else
-    {
-        printf("Error: arithmetic equations must contain operands, parentheses, numbers, or symbols");
-        exit(0);
-    }
-    printf("||Exit FACTOR");
 };
