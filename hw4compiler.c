@@ -570,6 +570,7 @@ void block(char identArr[50][12])
     tp0 = tp;//getting current index for reference later
     printf("initial cx: %d", cx);
     symbolTable[tp0].addr = cx;//storing current cx
+    printf("symTableAddr: %d", symbolTable[tp0].addr);
 
     codeTable[cx].opcode = 7;
     codeTable[cx].l = 0;
@@ -580,7 +581,7 @@ void block(char identArr[50][12])
     int numVars = VarDeclaration(identArr);
     ProcedureDeclaration(identArr);
     printf("\n||emit fix jmp||\n");
-    codeTable[symbolTable[tp0].addr].m = (cx * 3);//fixes temp jump val
+    codeTable[symbolTable[tp0].addr - 1].m = (cx * 3);//fixes temp jump val
     printf("\nsymbol addr of tp0: %d", symbolTable[tp0].addr);
     printf("initial cx3: %d", cx);
 /*
