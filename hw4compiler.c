@@ -550,40 +550,43 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________________________*/
 void printAssembly()
 {
-    printf("\n\nLine\tOP\tL\tM");
+    printf("\n\nLine    OP L  M");
     for(int i = 0; i < cx; i++)
     {
-        printf("\n%d\t%d\t%d\t%d", i, codeTable[i].opcode, codeTable[i].l, codeTable[i].m);
+        printf("\n%d\t%d  %d  %d", i, codeTable[i].opcode, codeTable[i].l, codeTable[i].m);
     }
 };
 
 void block(char identArr[50][12])
 {
     int tp0;//initial table index
+    int tempAddr;//temporary address holder
     printf("\ncalled block");
     printf("|token: %d", token);
     lexlvl++;
     printf("|lexlvl: %d", lexlvl);
     token = tokenArr[tokenIndex];
-
     printf("\n||creating temp JMP||");
     tp0 = tp;//getting current index for reference later
     printf("initial cx: %d", cx);
-    symbolTable[tp0].addr = cx;//storing current cx
+    tempAddr = cx;//storing current cx
     printf("symTableAddr: %d", symbolTable[tp0].addr);
 
     codeTable[cx].opcode = 7;
     codeTable[cx].l = 0;
     codeTable[cx].m = 0;//temporary jump value until fixed later
     cx++;
-    printf("initial cx2: %d", cx);
+    printf("cx2: %d", cx);
+
     ConstDeclaration(identArr);
+
     int numVars = VarDeclaration(identArr);
+
     ProcedureDeclaration(identArr);
+
     printf("\n||emit fix jmp||\n");
-    codeTable[symbolTable[tp0].addr - 1].m = (cx * 3);//fixes temp jump val
-    printf("\nsymbol addr of tp0: %d", symbolTable[tp0].addr);
-    printf("initial cx3: %d", cx);
+    codeTable[tempAddr].m = (cx * 3);//fixes temp jump val
+    printf("cx3: %d", cx);
 /*
 code[table[tx0].adr].a=cx; // The tentative jump address is fixed up
 table[tx0].adr=cx; // the space for address for the above jmp is now occupied
@@ -621,6 +624,8 @@ void insertSymbolTable(int kind, char name[11], int val, int level, int addr) //
     symbolTable[tp].addr = addr;
     symbolTable[tp].mark = 0;
     printf("|symbol.name: %s", symbolTable[tp].name);
+    printf("|symbol.level:%d", symbolTable[tp].level);
+    printf("|symbol.addr: %d", symbolTable[tp].addr);
     tp++;
     printf("||exit INSERTSYMTBL");
 }
@@ -638,11 +643,11 @@ int symbolTableCheck(char name[11])
         printf("\n|checking name # %d", i);
         for(int j = 0; j <= (token - 1); j++)
         {
-            printf("|checking letter:%c", symbolTable[i].name[j]);
+            // printf("|checking letter:%c", symbolTable[i].name[j]);
             if(symbolTable[i].name[j] != name[j])
             {
                 errcount++;
-                printf("||error at name/letter index %d", j);
+                // printf("||error at name/letter index %d", j);
             }
             if(j == (token - 1))
             {
@@ -712,7 +717,7 @@ void ConstDeclaration(char identArr[50][12])
             }
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            insertSymbolTable(1, tempName, token, 0, 0);
+            insertSymbolTable(1, tempName, token, lexlvl, 0);
             tokenIndex++;
             token = tokenArr[tokenIndex];
             printf("end of loop: %d", token);
@@ -763,7 +768,7 @@ int VarDeclaration(char identArray[50][12]) //returns number of variables
                 printf("Error: symbol name has already been declared");
                 exit(0);
             }
-            insertSymbolTable(2, tempName, 0, 0, numVars + 2);
+            insertSymbolTable(2, tempName, 0, lexlvl, numVars + 2);
             printf("|name stored:%s", tempName);
             tokenIndex++;
             token = tokenArr[tokenIndex];
@@ -797,19 +802,27 @@ void ProcedureDeclaration(char identArray[50][12])
                 printf("Procedure error 1");
                 exit(0);
             }
+            int jmpIndex = cx;//creating jmp for procedure
+            codeTable[cx].opcode = 7;
+            codeTable[cx].l = 0;
+            codeTable[cx].m = 0;
+            cx++;
+
             tokenIndex++;
             token = tokenArr[tokenIndex];
             char tempName [11] = {'#'};
             for(int i = 0; identArray[varCount][i] != '#'; i++)
             {
-                printf("|%dletter(s), stored:", (i + 1));
+                // printf("|%dletter(s), stored:", (i + 1));
                 tempName[i] = identArray[varCount][i];
-                printf("%c", tempName[i]);
+                // printf("%c", tempName[i]);
             }
             varCount++;
-            printf("|varcount:%d", varCount);
+            // printf("|varcount:%d", varCount);
             insertSymbolTable(3, tempName, 0, lexlvl, cx);
-            printf("toke: %d", token);
+            // printf("toke: %d", token);
+            
+
             tokenIndex++;
             token = tokenArr[tokenIndex];
             if (token != semicolonsym)
@@ -826,10 +839,11 @@ void ProcedureDeclaration(char identArray[50][12])
                 printf("Procedure error 3");
                 exit(0);
             }
-            printf("|semicolonsym in procedure");
+            codeTable[jmpIndex].m = cx;
+            // printf("|semicolonsym in procedure");
             tokenIndex++;
             token = tokenArr[tokenIndex];
-            printf("|token at end of procedure declaration: %d", token);
+            // printf("|token at end of procedure declaration: %d", token);
             printf("Exit PROCEDUREDECLARATION");
         }   while (token == procsym);
         /*
@@ -864,14 +878,14 @@ int STATEMENT(char identArray[50][12])
         char tempName [11] = {'#'};
         for(int i = 0; identArray[varCount][i] != '#'; i++)
         {
-            printf("|%dletter(s), stored:", (i + 1));
+            // printf("|%dletter(s), stored:", (i + 1));
             tempName[i] = identArray[varCount][i];
             printf("%c", tempName[i]);
         }
-        printf("|name stored:%s", tempName);
+        // printf("|name stored:%s", tempName);
         varCount++;
         symIdx = symbolTableCheck(tempName);
-        printf("|Current symidx: %d", symIdx);
+        // printf("|Current symidx: %d", symIdx);
         if (symIdx == -1)
         {
             printf("Error: undeclared identifier");
@@ -884,11 +898,11 @@ int STATEMENT(char identArray[50][12])
         }
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        printf("Token should be 20:%d", token);
+        // printf("Token should be 20:%d", token);
 
         if (token != becomessym)
         {
-            printf("|token:%d", token);
+            // printf("|token:%d", token);
             printf("Error: assignment statements must use :=");
             exit(0);
         }
@@ -900,7 +914,7 @@ int STATEMENT(char identArray[50][12])
         // emit STO (M = table[symIdx].addr)
         printf("\n||emit STO||");
         codeTable[cx].opcode = 4;
-        codeTable[cx].l = 0;
+        codeTable[cx].l = lexlvl - symbolTable[symIdx].level;
         codeTable[cx].m = symbolTable[symIdx].addr;
         cx++;
         return(0);
@@ -922,11 +936,11 @@ int STATEMENT(char identArray[50][12])
             char tempName [11] = {'#'};
             for(int i = 0; identArray[varCount][i] != '#'; i++)
             {
-                printf("|%dletter(s), stored:", (i + 1));
+                // printf("|%dletter(s), stored:", (i + 1));
                 tempName[i] = identArray[varCount][i];
-                printf("%c", tempName[i]);
+                // printf("%c", tempName[i]);
             }
-            printf("|name stored:%s", tempName);
+            // printf("|name stored:%s", tempName);
             varCount++;
             symIdx = symbolTableCheck(tempName);
             if (symIdx == -1)
@@ -939,8 +953,8 @@ int STATEMENT(char identArray[50][12])
                 //gen(CAL, level – symbollevel(i), symboladdr(i));
                 printf("\n||emit CAL||");
                 codeTable[cx].opcode = 5;
-                codeTable[cx].l = lexlvl - symbolTable[tp].level;//needs to be updated
-                codeTable[cx].m = tp;
+                codeTable[cx].l = lexlvl - symbolTable[symIdx].level;//needs to be updated
+                codeTable[cx].m = symbolTable[symIdx].addr;
                 cx++;
             }
             else
@@ -977,7 +991,8 @@ int STATEMENT(char identArray[50][12])
         printf("|endsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
-        printf("//token before return: %d", token);
+        // printf("//token before return: %d", token);
+        printf("\n||Exit STATEMENT");
         return(0);
     }
     else if (token == ifsym)
@@ -991,7 +1006,7 @@ int STATEMENT(char identArray[50][12])
         jpcIdx = cx;
         codeTable[cx].opcode = 8;
         codeTable[cx].l = 0;
-        codeTable[cx].m = jpcIdx;
+        codeTable[cx].m = 0;
         cx++;
         if (token != thensym)
         {printf("|thensym");
@@ -1014,6 +1029,7 @@ int STATEMENT(char identArray[50][12])
         printf("|fisym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
+        printf("\n||Exit STATEMENT");
         return(0);
     }
     else if (token == whilesym)
@@ -1063,13 +1079,13 @@ int STATEMENT(char identArray[50][12])
         char tempName [11] = {'#'};
         for(int i = 0; identArray[varCount][i] != '#'; i++)
         {
-            printf("|%dletter(s), stored:", (i + 1));
+            // printf("|%dletter(s), stored:", (i + 1));
             tempName[i] = identArray[varCount][i];
-            printf("%c", tempName[i]);
+            // printf("%c", tempName[i]);
         }
         printf("|name stored:%s", tempName);
         symIdx = symbolTableCheck(tempName);
-        printf("|Current symidx: %d", symIdx);
+        // printf("|Current symidx: %d", symIdx);
 
         if (symIdx == -1)
         {
@@ -1092,8 +1108,8 @@ int STATEMENT(char identArray[50][12])
         // emit STO (M = table[symIdx].addr)
         printf("\n||emit STO(2)||");
         codeTable[cx].opcode = 4;
-        codeTable[cx].l = lexlvl;
-        codeTable[cx].m = 0;
+        codeTable[cx].l = lexlvl - symbolTable[symIdx].level;
+        codeTable[cx].m = symbolTable[symIdx].addr;
         cx++;
         return(0);
     }
@@ -1353,7 +1369,7 @@ void FACTOR(char identArray[50][12])
         char tempName [11] = {'#'};
         for(int i = 0; i < token; i++)
         {
-            printf("|%dletter(s), stored:", (i + 1));
+            // printf("|%dletter(s), stored:", (i + 1));
             tempName[i] = identArray[varCount][i];
             printf("%c", tempName[i]);
         }
