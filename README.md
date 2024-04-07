@@ -1,6 +1,6 @@
 # COP3402_HW4 UCF Spring 2024
 PL/0 Compiler (Incomplete)  
-___By Daylen Hendricks & Brandon Ramlagan___
+___By Daylen Hendricks___
 
 
 **To compile the compiler:**
