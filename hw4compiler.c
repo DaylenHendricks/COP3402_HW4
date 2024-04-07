@@ -38,7 +38,7 @@ multsym, slashsym, fisym, eqsym, neqsym, lessym, leqsym,
 gtrsym, geqsym, lparentsym, rparentsym, commasym, semicolonsym,
 periodsym, becomessym, beginsym, endsym, ifsym, thensym,
 whilesym, dosym, callsym, constsym, varsym, procsym, writesym,
-readsym , elsesym} token_type;
+readsym} token_type;
 
 //global variables
 int tokenArr[500] = {0};//finalized token array
@@ -53,6 +53,7 @@ int finalToken;//token for period check
 char assemblyTable[50][3];//table for assembly code
 int assemIndex = 0;
 int lexlvl = -1;
+int firstBlock = 0;
 
 void printAssembly();
 void block(char identArray[50][12]);
@@ -571,11 +572,15 @@ void block(char identArr[50][12])
     printf("initial cx: %d", cx);
     tempAddr = cx;//storing current cx
     printf("symTableAddr: %d", symbolTable[tp0].addr);
-
+    if(firstBlock == 0)
+    {
     codeTable[cx].opcode = 7;
     codeTable[cx].l = 0;
     codeTable[cx].m = 0;//temporary jump value until fixed later
     cx++;
+    firstBlock = 1;
+    }
+
     printf("cx2: %d", cx);
 
     ConstDeclaration(identArr);
@@ -637,28 +642,35 @@ int symbolTableCheck(char name[11])
     printf("|TP:%d", tp);
     int errcount = 0;//how many dissimilarities
     int i;
-    for(i = 0; i <= tp; i++)
+    for(i = 1; i <= tp; i++)
     {
         errcount = 0;
         printf("\n|checking name # %d", i);
-        for(int j = 0; j <= (token - 1); j++)
+        if(symbolTable[i].level <= lexlvl)
         {
-            // printf("|checking letter:%c", symbolTable[i].name[j]);
-            if(symbolTable[i].name[j] != name[j])
+            for(int j = 0; j <= (token - 1); j++)
             {
-                errcount++;
-                // printf("||error at name/letter index %d", j);
-            }
-            if(j == (token - 1))
-            {
-                if(errcount == 0)
+                // printf("|checking letter:%c", symbolTable[i].name[j]);
+                if(symbolTable[i].name[j] != name[j])
                 {
-                    printf("|WORD FOUND!\n");
-                    printf("||exit SYMTBLCHCK");
-                    printf("|return: %d", i);
-                    return i;
+                    errcount++;
+                    // printf("||error at name/letter index %d", j);
+                }
+                if(j == (token - 1))
+                {
+                    if(errcount == 0 && symbolTable[i].level <= lexlvl && symbolTable[i].mark == 0)
+                    {
+                        printf("|WORD FOUND!\n");
+                        printf("||exit SYMTBLCHCK");
+                        printf("|return: %d", i);
+                        return i;
+                    }
                 }
             }
+        }
+        else
+        {
+            //do nothing
         }
 
     }
@@ -996,7 +1008,8 @@ int STATEMENT(char identArray[50][12])
         return(0);
     }
     else if (token == ifsym)
-    {printf("|ifsym");
+    {   
+        printf("|ifsym");
         tokenIndex++;
         token = tokenArr[tokenIndex];
         CONDITION(identArray);
